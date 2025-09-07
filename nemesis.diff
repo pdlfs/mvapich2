@@ -1,0 +1,26 @@
+diff -ru ./src/mpid/ch3/channels/nemesis/netmod/tcp/tcp_getip.c ../mvapich2-2.3.7-2_PDL/src/mpid/ch3/channels/nemesis/netmod/tcp/tcp_getip.c
+--- ./src/mpid/ch3/channels/nemesis/netmod/tcp/tcp_getip.c	2024-09-17 18:47:06.000000000 -0400
++++ ../mvapich2-2.3.7-2_PDL/src/mpid/ch3/channels/nemesis/netmod/tcp/tcp_getip.c	2025-09-04 14:21:13.673011000 -0400
+@@ -151,8 +151,8 @@
+ 
+ 	    addr = ((struct sockaddr_in *) &(ifreq->ifr_addr))->sin_addr;
+ 	    if (dbg_ifname) {
+-            char* ip[INET_ADDRSTRLEN];
+-            inet_ntop(AF_INET, addr, ip, sizeof(ip));
++            char ip[INET_ADDRSTRLEN];
++            inet_ntop(AF_INET, &addr, ip, sizeof(ip));
+             fprintf(stdout, "IPv4 address = %08x (%s)\n", addr.s_addr, ip);
+ 	    }
+ 
+diff -ru ./src/mpid/ch3/channels/nemesis/netmod/tcp/tcp_init.c ../mvapich2-2.3.7-2_PDL/src/mpid/ch3/channels/nemesis/netmod/tcp/tcp_init.c
+--- ./src/mpid/ch3/channels/nemesis/netmod/tcp/tcp_init.c	2024-09-17 18:47:06.000000000 -0400
++++ ../mvapich2-2.3.7-2_PDL/src/mpid/ch3/channels/nemesis/netmod/tcp/tcp_init.c	2025-09-04 14:17:00.883020000 -0400
+@@ -388,7 +388,7 @@
+             if (!mpi_errno);
+                 break;
+         }
+-        MPIR_ERR_CHKANDJUMP2(mpierrno != 0, mpi_errno, MPI_ERR_OTHER,
++        MPIR_ERR_CHKANDJUMP2(mpi_errno != 0, mpi_errno, MPI_ERR_OTHER,
+                             "**getaddrinfo", "**getaddrinfo %s %d",
+                             ifname_string, mpi_errno);
+ 

@@ -1,0 +1,84 @@
+diff -ru ./Makefile.am ../mvapich2-2.3.7-2_PDL/Makefile.am
+--- ./Makefile.am	2024-09-17 18:47:06.000000000 -0400
++++ ../mvapich2-2.3.7-2_PDL/Makefile.am	2025-09-06 15:17:02.656741000 -0400
+@@ -202,7 +202,8 @@
+ if BUILD_OSU_MVAPICH
+ if BUILD_HWLOC_v1
+ SUBDIRS += contrib/hwloc_v1
+-else
++endif
++if BUILD_HWLOC_v2
+ SUBDIRS += contrib/hwloc_v2
+ endif
+ endif
+@@ -221,7 +222,8 @@
+ if BUILD_HWLOC_v1
+ AM_CPPFLAGS += -Icontrib/hwloc_v1/include/ -I$(top_srcdir)/contrib/hwloc_v1/include
+ lib_lib@MPILIBNAME@_la_LIBADD += contrib/hwloc_v1/src/libhwloc_embedded.la
+-else
++endif
++if BUILD_HWLOC_v2
+ AM_CPPFLAGS += -Icontrib/hwloc_v2/include/ -I$(top_srcdir)/contrib/hwloc_v2/include
+ lib_lib@MPILIBNAME@_la_LIBADD += contrib/hwloc_v2/hwloc/libhwloc_embedded.la
+ endif
+diff -ru ./configure.ac ../mvapich2-2.3.7-2_PDL/configure.ac
+--- ./configure.ac	2024-09-17 18:47:06.000000000 -0400
++++ ../mvapich2-2.3.7-2_PDL/configure.ac	2025-09-06 19:23:01.543932000 -0400
+@@ -536,23 +536,6 @@
+ 
+ dnl "default" is a special device that allows MPICH to choose one
+ dnl based on the environment.
+-AC_ARG_WITH(hwloc,
+-	AC_HELP_STRING([--with-hwloc=version],
+-                   [Specify the hwloc version to use with MVAPICH2
+-                    (Options: v1, v2) (Default: v1)]),,
+-	               with_hwloc=v1)
+- 
+-AM_CONDITIONAL([BUILD_HWLOC_v1], [test x$with_hwloc = xv1])
+-AM_CONDITIONAL([BUILD_HWLOC_v2], [test x$with_hwloc = xv2])
+-
+-if test "$with_hwloc" = "v1" ; then
+-    AC_CONFIG_SUBDIRS([contrib/hwloc_v1])
+-    AC_DEFINE([_USE_HWLOC_V1_], 1, [Define when using HWLOC V1])
+-else
+-    AC_CONFIG_SUBDIRS([contrib/hwloc_v2])
+-    AC_DEFINE([_USE_HWLOC_V2_], 1, [Define when using HWLOC V2])
+-fi
+-
+ AC_ARG_WITH(device,
+ 	AC_HELP_STRING([--with-device=name], [Specify the communication device for MVAPICH2]),,
+ 	with_device=default)
+@@ -5528,6 +5511,33 @@
+     fi
+ fi
+ 
++dnl moved hwloc lower so we can use AC_CHECK_HEADER/AC_CHECK_LIB
++AC_ARG_WITH(hwloc,
++	AC_HELP_STRING([--with-hwloc=version],
++                   [Specify the hwloc version to use with MVAPICH2
++                    (Options: v1, v2, v2ext) (Default: v1)]),,
++	               with_hwloc=v1)
++ 
++AM_CONDITIONAL([BUILD_HWLOC_v1], [test x$with_hwloc = xv1])
++AM_CONDITIONAL([BUILD_HWLOC_v2], [test x$with_hwloc = xv2])
++
++if test "$with_hwloc" = "v1" ; then
++    AC_CONFIG_SUBDIRS([contrib/hwloc_v1])
++    AC_DEFINE([_USE_HWLOC_V1_], 1, [Define when using HWLOC V1])
++fi
++if test "$with_hwloc" = "v2" ; then
++    AC_CONFIG_SUBDIRS([contrib/hwloc_v2])
++    AC_DEFINE([_USE_HWLOC_V2_], 1, [Define when using HWLOC V2])
++fi
++if test "$with_hwloc" = "v2ext" ; then
++    AC_CHECK_HEADER([hwloc.h], [], [AC_MSG_ERROR([could not find hwloc.h. Configure aborted])])
++    AC_CHECK_LIB([hwloc], [hwloc_topology_init],
++             [PAC_PREPEND_FLAG([-lhwloc -lm],[LIBS])
++              PAC_PREPEND_FLAG([-lhwloc -lm], [WRAPPER_LIBS])],
++             [AC_MSG_ERROR([could not find the hwloc lib. Configure aborted])])
++    AC_DEFINE([_USE_HWLOC_V2_], 1, [Define when using HWLOC V2])
++fi
++
+ dnl Configure any subdirectories.  Note that config.status will *not* 
+ dnl reexecute these!
+ dnl 
